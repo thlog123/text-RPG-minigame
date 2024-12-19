@@ -1,0 +1,110 @@
+import random
+
+# 玩家角色初始化
+def create_character():
+    print("歡迎來到迷你RPG冒險！")
+    name = input("請輸入你的角色名稱：")
+    print("選擇職業：1. 戰士  2. 法師")
+    profession = input("請輸入職業編號：")
+    if profession == "1":
+        profession = "戰士"
+        hp, atk, defense = 100, 15, 10
+    elif profession == "2":
+        profession = "法師"
+        hp, atk, defense = 80, 20, 5
+    else:
+        print("無效輸入，默認為戰士！")
+        profession = "戰士"
+        hp, atk, defense = 100, 15, 10
+    print(f"角色建立成功！名稱：{name}，職業：{profession}")
+    return {"name": name, "profession": profession, "hp": hp, "atk": atk, "def": defense, "exp": 0, "level": 1}
+
+# 怪物生成
+def generate_monster(player_level):
+    base_monsters = [
+        {"name": "史萊姆", "hp": 100, "atk": 3, "def": 8},
+        {"name": "哥布林", "hp": 80, "atk": 10, "def": 10},
+        {"name": "巨狼", "hp": 50, "atk": 20, "def": 5}
+    ]
+    monster = random.choice(base_monsters)
+    # 怪物隨玩家等級增強
+    monster["hp"] += player_level * 15
+    monster["atk"] += player_level * 3
+    monster["def"] += player_level * 1.5
+    return monster
+
+# BOSS生成
+def generate_boss(player_level):
+    boss = {
+        "name": "地獄魔王",
+        "hp": 80 + player_level * 10,  # 根據玩家等級調整生命值
+        "atk": 25 + player_level * 3,  # 根據玩家等級調整攻擊力
+        "def": 13 + player_level * 2   # 根據玩家等級調整防禦力
+    }
+    return boss
+
+# 戰鬥系統
+def battle(player, monster):
+    print(f"\n你遇到了{'BOSS：' if monster['name'] == '地獄魔王' else ''}{monster['name']}！")
+    while player["hp"] > 0 and monster["hp"] > 0:
+        # 玩家攻擊
+        damage_to_monster = max(player["atk"] - monster["def"], 1)
+        monster["hp"] -= damage_to_monster
+        print(f"你對{monster['name']}造成了{damage_to_monster}點傷害！（怪物剩餘HP：{max(monster['hp'], 0)}）")
+        
+        if monster["hp"] <= 0:
+            print(f"你擊敗了{monster['name']}！")
+            if monster["name"] == "地獄魔王":
+                player["exp"] += random.randint(100, 120)  # 魔王經驗值 100-120
+            else:
+                player["exp"] += random.randint(20, 40)  # 普通怪物經驗值 20-40
+            level_up(player)
+            return True
+
+        # 怪物攻擊
+        damage_to_player = max(monster["atk"] - player["def"], 1)
+        player["hp"] -= damage_to_player
+        print(f"{monster['name']}對你造成了{damage_to_player}點傷害！（你的剩餘HP：{max(player['hp'], 0)}）")
+
+        if player["hp"] <= 0:
+            print("你被擊敗了！遊戲結束！")
+            return False
+
+# 升級系統
+def level_up(player):
+    while player["exp"] >= 50:
+        player["exp"] -= 50
+        player["level"] += 1
+        player["hp"] += 25
+        player["atk"] += 4
+        player["def"] += 2
+        print(f"恭喜你升級了！等級：{player['level']}，生命值提升到：{player['hp']}")
+
+# 主遊戲
+def main_game():
+    player = create_character()
+    battles = 0  # 計算戰鬥次數，用於觸發BOSS
+    while player["hp"] > 0:
+        action = input("\n輸入行動：1. 探索  2. 休息  3. 查看狀態  4. 離開遊戲\n")
+        if action == "1":
+            battles += 1
+            if battles % 10 == 0:  # 每10次戰鬥遇到BOSS
+                monster = generate_boss(player["level"])
+            else:
+                monster = generate_monster(player["level"])
+            if not battle(player, monster):
+                break
+        elif action == "2":
+            player["hp"] = min(player["hp"] + 20, 100 + (player["level"] - 1) * 20)
+            print(f"你休息了一會，生命值恢復到：{player['hp']}")
+        elif action == "3":
+            print(f"\n角色狀態：名稱：{player['name']}，職業：{player['profession']}，等級：{player['level']}")
+            print(f"HP：{player['hp']}，ATK：{player['atk']}，DEF：{player['def']}，EXP：{player['exp']}")
+        elif action == "4":
+            print("感謝遊玩！再見！")
+            break
+        else:
+            print("無效的選項，請重新輸入！")
+
+# 啟動遊戲
+main_game()
